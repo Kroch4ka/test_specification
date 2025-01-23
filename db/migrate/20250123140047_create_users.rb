@@ -9,6 +9,8 @@ class CreateUsers < ActiveRecord::Migration[8.0]
       t.string :country
       t.string :gender
       t.timestamps
+
+      t.index :email, unique: true
     end
   end
 end
