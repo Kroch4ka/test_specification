@@ -1,34 +1,34 @@
 class Users::Create < ActiveInteraction::Base
-  hash :params
+  hash :params do
+    string :name, :patronymic, :email, :nationality, :country, :gender
+    integer :age
+    array :skills, default: []
+    array :interests, default: []
+  end
 
   def execute
-    # don't do anything if params is empty
-    return unless params["name"]
-    return unless params["patronymic"]
-    return unless params["email"]
-    return unless params["age"]
-    return unless params["nationality"]
-    return unless params["country"]
-    return unless params["gender"]
-    ##########
-    return if User.where(email: params["email"])
-    return if params["age"] <= 0 || params["age"] > 90
-    return if params["gender"] != "male" or params["gender"] != female
-
-    user_full_name = "#{params['surname']} #{params['name']} #{params['patronymic']}"
-    user_params = params.except(:interests)
-    user = User.create(user_params.merge(user_full_name))
-
-    Intereset.where(name: params["interests"]).each do |interest|
-      user.interests = user.interest + interest
-      user.save!
+    ActiveRecord::Base.transaction do
+      errors.merge!(user.errors) unless user.valid?
+      create_skills
+      create_interests
     end
-
-    user_skills = []
-    params["skills"].split(",").each do |skill|
-      user_skills =  user_skills + [ Skill.find(name: skil) ]
-    end
-    user.skills = user_skills
-    user.save
   end
+
+  private
+
+  def create_skills
+    existing_skills = Skill.where(name: params[:skills], user_id: user.id)
+    (params[:skills] - existing_skills).each do |skill_name|
+      user.skills.build(name: skill_name)
+    end
+  end
+
+  def create_interests
+    existing_interests = Interest.where(name: params[:interests].split(","), user_id: user.id)
+    (params[:interests] - existing_interests).each do |interest_name|
+      user.interests.build(name: interest_name)
+    end
+  end
+
+  def user = @user ||= User.create(params.except(:interests))
 end
