@@ -25,9 +25,8 @@ class Users::Create < ActiveInteraction::Base
     end
 
     user_skills = []
-    params["skills"].split(",").each do |skil|
-      skil = Skil.find(name: skil)
-      user_skills =  user_skills + [ skil ]
+    params["skills"].split(",").each do |skill|
+      user_skills =  user_skills + [ Skill.find(name: skil) ]
     end
     user.skills = user_skills
     user.save
